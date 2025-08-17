@@ -4,13 +4,13 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import promClient from 'prom-client';
 import { cfg } from '@config/reality-sim';
-import { mongo, redis } from '@db/reality-sim';
+import { mongo } from '@db/reality-sim';
 import { publish } from '@messaging/reality-sim';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { v4 as uuidv4 } from 'uuid';
 import { ObjectId } from 'mongodb';
+import { issueTokens, rotateRefresh, revokeRefresh } from './auth';
 
 // Types used locally for DB shape
 type Vec2 = { x:number; y:number };
@@ -33,42 +33,6 @@ promClient.collectDefaultMetrics({ register: registry });
 app.get('/metrics', async (_req, res) => { res.set('Content-Type', registry.contentType); res.end(await registry.metrics()); });
 
 app.get('/health', (_req, res) => res.json({ ok: true, env: cfg.NODE_ENV }));
-
-// ---- Auth helpers ----
-const ACCESS_TTL_SEC = 60 * 15; // 15m
-const REFRESH_TTL_SEC = 60 * 60 * 24 * 30; // 30d
-
-type JWTPayload = { sub: string; email: string; jti: string };
-
-async function issueTokens(userId: string, email: string) {
-  const jti = uuidv4();
-  const access = jwt.sign({ sub: userId, email, jti } as JWTPayload, cfg.JWT_SECRET, { algorithm: 'HS256', expiresIn: ACCESS_TTL_SEC });
-  const refresh = jwt.sign({ sub: userId, email, jti } as JWTPayload, cfg.JWT_SECRET, { algorithm: 'HS256', expiresIn: REFRESH_TTL_SEC });
-  const r = await redis();
-  await r.set(`refresh:${jti}`, userId, { EX: REFRESH_TTL_SEC });
-  return { access, refresh };
-}
-
-async function rotateRefresh(oldToken: string) {
-  const r = await redis();
-  try {
-    const decoded = jwt.verify(oldToken, cfg.JWT_SECRET) as JWTPayload;
-    const exists = await r.get(`refresh:${decoded.jti}`);
-    if (!exists) throw new Error('refresh revoked');
-    await r.del(`refresh:${decoded.jti}`);
-    return await issueTokens(decoded.sub, decoded.email);
-  } catch {
-    throw new Error('invalid refresh');
-  }
-}
-
-async function revokeRefresh(token: string) {
-  const r = await redis();
-  try {
-    const decoded = jwt.verify(token, cfg.JWT_SECRET) as JWTPayload;
-    await r.del(`refresh:${decoded.jti}`);
-  } catch {}
-}
 
 function authRequired(req: express.Request, res: express.Response, next: express.NextFunction) {
   const h = req.header('authorization') || req.header('Authorization');
