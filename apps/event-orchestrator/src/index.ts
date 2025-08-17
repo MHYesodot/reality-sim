@@ -31,6 +31,9 @@ http.createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'application/json' });
     return res.end(JSON.stringify({ ok: true }));
   }
-  if (req.url === '/metrics') { res.writeHead(200, { 'content-type': registry.contentType }); return registry.metrics().then(m => res.end(m)); }
+  if (req.url === '/metrics') {
+    res.writeHead(200, { 'content-type': registry.contentType });
+    return registry.metrics().then((m: string) => res.end(m));
+  }
   res.writeHead(404); res.end();
 }).listen(PORT, () => console.log(`[health] listening on ${PORT}`));
