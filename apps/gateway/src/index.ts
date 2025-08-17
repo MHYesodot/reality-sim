@@ -11,7 +11,7 @@ import type { JwtPayload } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { ObjectId } from 'mongodb';
-import { issueTokens, rotateRefresh, revokeRefresh } from './auth';
+import { issueTokens, rotateRefresh, revokeRefresh } from './auth.js';
 
 // Types used locally for DB shape
 type Vec2 = { x:number; y:number };

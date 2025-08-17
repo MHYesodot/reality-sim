@@ -1,19 +1,19 @@
 {
   "name": "@messaging/reality-sim",
   "version": "0.1.0",
+  "private": true,
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc -p tsconfig.json"
-  },
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "scripts": { "build": "tsc -p tsconfig.json" },
   "dependencies": {
-    "amqplib": "^0.10.4",
-    "zod": "^3.23.8",
-    "@config/reality-sim": "workspace:*"
+    "@config/reality-sim": "workspace:*",
+    "@reality-sim/types": "workspace:*",
+    "@db/reality-sim": "workspace:*",
+    "@ai/reality-sim": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.6.2",
-    "@types/amqplib": "^0.10.6"
+    "typescript": "^5.6.2"
   }
 }

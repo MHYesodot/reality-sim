@@ -10,17 +10,33 @@ COPY package.json ./
 COPY .npmrc* ./
 COPY tsconfig*.json ./
 
-# Copy needed packages and the gateway app
-COPY packages ./packages
+# Copy ONLY the packages needed by the gateway
+COPY packages/config ./packages/config
+COPY packages/db ./packages/db
+COPY packages/messaging ./packages/messaging
+
+# Copy the gateway app
 COPY apps/gateway ./apps/gateway
 
-# Install the app and all of its workspace dependencies
-RUN pnpm -r --filter @apps/gateway^... --filter @apps/gateway install --no-frozen-lockfile
+# Install only gateway + its declared deps (config/db/messaging)
+RUN pnpm -r \
+  --filter @config/reality-sim \
+  --filter @db/reality-sim \
+  --filter @messaging/reality-sim \
+  --filter @apps/gateway \
+  install --no-frozen-lockfile
 
-# Build the app and all of its workspace dependencies
-RUN pnpm -r --filter @apps/gateway^... --filter @apps/gateway build
+# Build only what the gateway needs
+RUN pnpm -r \
+  --filter @config/reality-sim \
+  --filter @db/reality-sim \
+  --filter @messaging/reality-sim \
+  --filter @apps/gateway \
+  build
 
 ENV NODE_ENV=production
 WORKDIR /app/apps/gateway
 EXPOSE 8080
-CMD ["node","dist/index.js"]
+
+# שים לב: אתה כבר בתוך /app/apps/gateway אז *רק* dist/index.js
+CMD ["node", "--enable-source-maps", "--experimental-specifier-resolution=node", "dist/index.js"]
