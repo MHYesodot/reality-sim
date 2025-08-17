@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reality-quest-ai
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8081"
+    prometheus.io/path: "/metrics"
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: reality-quest-ai } }
+  template:
+    metadata: { labels: { app: reality-quest-ai } }
+    spec:
+      containers:
+        - name: quest-ai
+          image: ghcr.io/your-org/reality-quest-ai:latest
+          ports: [ { containerPort: 8081 } ]
+          envFrom:
+            - configMapRef: { name: reality-env }
+            - secretRef: { name: reality-secrets }
+          env:
+          # no extra env
+          livenessProbe: { httpGet: { path: /health, port: 8081 }, initialDelaySeconds: 5, periodSeconds: 10 }
+          readinessProbe: { httpGet: { path: /health, port: 8081 }, initialDelaySeconds: 3, periodSeconds: 10 }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reality-quest-ai
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8081"
+    prometheus.io/path: "/metrics"
+spec:
+  selector: { app: reality-quest-ai }
+  ports: [ { port: 8081, targetPort: 8081 } ]

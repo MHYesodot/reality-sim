@@ -1,0 +1,24 @@
+{
+  "title": "RealitySim - Workers",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Quest AI events/sec",
+      "targets": [
+        {
+          "expr": "sum(rate(quest_ai_events_total[1m]))"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Progression events/sec",
+      "targets": [
+        {
+          "expr": "sum(rate(progression_events_total[1m]))"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 36
+}

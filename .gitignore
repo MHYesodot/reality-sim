@@ -1,0 +1,29 @@
+# node / pnpm / turbo
+node_modules/
+.pnpm-store/
+.pnp.cjs
+.turbo/
+dist/
+build/
+coverage/
+*.log
+*.tsbuildinfo
+
+# expo
+apps/**/.expo/
+apps/**/.expo-shared/
+apps/**/web-build/
+
+# env / secrets
+.env
+apps/**/.env*
+deploy/**/.env*
+
+# docker
+**/docker-data/
+**/*.local.yml
+
+# editor/OS
+.vscode/
+.DS_Store
+Thumbs.db

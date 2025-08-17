@@ -1,0 +1,68 @@
+{{- range $app := .Values.services }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reality-{{ $app.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: reality-{{ $app.name }} }
+  template:
+    metadata:
+      labels: { app: reality-{{ $app.name }} }
+    spec:
+      containers:
+        - name: {{ $app.name }}
+          image: "{{ $.Values.imageRepo }}/reality-{{ $app.name }}:{{ $.Values.imageTag }}"
+          imagePullPolicy: IfNotPresent
+          ports: [ { name: http, containerPort: {{ $app.port }} } ]
+          livenessProbe:
+            {{- if eq $app.name "gateway" }}
+            httpGet: { path: /health, port: {{ $app.port }} }
+            {{- else if eq $app.name "realtime" }}
+            httpGet: { path: /health, port: {{ $app.port }} }
+            {{- else }}
+            httpGet: { path: /health, port: {{ $app.port }} }
+            {{- end }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            {{- if or (eq $app.name "gateway") (eq $app.name "realtime") }}
+            httpGet: { path: /health, port: {{ $app.port }} }
+            {{- else }}
+            httpGet: { path: /health, port: {{ $app.port }} }
+            {{- end }}
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            {{- $res := (index $.Values.resources $app.name) | default dict }}
+            requests:
+              cpu: {{ default "50m" (index $res.requests "cpu") | quote }}
+              memory: {{ default "64Mi" (index $res.requests "memory") | quote }}
+            limits:
+              cpu: {{ default "500m" (index $res.limits "cpu") | quote }}
+              memory: {{ default "512Mi" (index $res.limits "memory") | quote }}
+          env:
+          {{- range $app.env }}
+            - name: {{ .name }}
+              {{- if .value }}
+              value: {{ .value | quote }}
+              {{- else }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .valueFrom.secretKeyRef.name }}
+                  key: {{ .valueFrom.secretKeyRef.key }}
+              {{- end }}
+          {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reality-{{ $app.name }}
+spec:
+  selector: { app: reality-{{ $app.name }} }
+  ports:
+    - port: {{ $app.port }}
+      targetPort: {{ $app.port }}
+      protocol: TCP
+{{- end }}

@@ -1,0 +1,35 @@
+name: client-eas-build
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        type: choice
+        description: 'Platform to build'
+        required: true
+        default: 'ios'
+        options: [ios, android]
+  push:
+    paths:
+      - 'apps/client-expo/**'
+      - '.github/workflows/client-eas-build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Install deps
+        run: |
+          cd apps/client-expo
+          npm i -g pnpm
+          pnpm install
+      - name: EAS build
+        working-directory: apps/client-expo
+        run: |
+          eas build --non-interactive --platform ${{ github.event.inputs.platform || 'ios' }}

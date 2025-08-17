@@ -1,0 +1,116 @@
+imageRepo: ghcr.io/your-org
+imageTag: latest
+
+secrets:
+  JWT_SECRET: "change-me"
+  OPENAI_API_KEY: ""
+
+env:
+  RABBITMQ_URL: "amqp://rabbitmq.default.svc.cluster.local:5672"
+  MONGO_URL: "mongodb://mongo:27017/reality"
+  REDIS_URL: "redis://redis:6379"
+  PORT_GATEWAY: "8080"
+  PORT_REALTIME: "8090"
+
+services:
+  - name: gateway
+    port: 8080
+    env:
+      - name: PORT
+        value: "8080"
+      - name: JWT_SECRET
+        valueFrom:
+          secretKeyRef: { name: reality-sim-secrets, key: JWT_SECRET }
+      - name: MONGO_URL
+        value: "{{ .Values.env.MONGO_URL }}"
+      - name: REDIS_URL
+        value: "{{ .Values.env.REDIS_URL }}"
+      - name: RABBITMQ_URL
+        value: "{{ .Values.env.RABBITMQ_URL }}"
+  - name: realtime
+    port: 8090
+    env:
+      - name: JWT_SECRET
+        valueFrom:
+          secretKeyRef: { name: reality-sim-secrets, key: JWT_SECRET }
+      - name: RABBITMQ_URL
+        value: "{{ .Values.env.RABBITMQ_URL }}"
+  - name: sim-engine
+    port: 8081
+    env:
+      - name: RABBITMQ_URL
+        value: "{{ .Values.env.RABBITMQ_URL }}"
+  - name: event-orchestrator
+    port: 8081
+    env:
+      - name: RABBITMQ_URL
+        value: "{{ .Values.env.RABBITMQ_URL }}"
+  - name: quest-ai
+    port: 8081
+    env:
+      - name: RABBITMQ_URL
+        value: "{{ .Values.env.RABBITMQ_URL }}"
+      - name: MONGO_URL
+        value: "{{ .Values.env.MONGO_URL }}"
+      - name: OPENAI_API_KEY
+        valueFrom:
+          secretKeyRef: { name: reality-sim-secrets, key: OPENAI_API_KEY }
+  - name: progression
+    port: 8081
+    env:
+      - name: RABBITMQ_URL
+        value: "{{ .Values.env.RABBITMQ_URL }}"
+      - name: MONGO_URL
+        value: "{{ .Values.env.MONGO_URL }}"
+
+
+ingress:
+  enabled: true
+  className: nginx
+  host: example.com
+  tls:
+    enabled: true
+    secretName: reality-tls
+
+resources:
+  gateway:
+    requests: { cpu: "100m", memory: "128Mi" }
+    limits:   { cpu: "500m", memory: "512Mi" }
+  realtime:
+    requests: { cpu: "100m", memory: "128Mi" }
+    limits:   { cpu: "500m", memory: "512Mi" }
+  sim-engine:
+    requests: { cpu: "50m", memory: "64Mi" }
+    limits:   { cpu: "200m", memory: "256Mi" }
+  event-orchestrator:
+    requests: { cpu: "50m", memory: "64Mi" }
+    limits:   { cpu: "200m", memory: "256Mi" }
+  quest-ai:
+    requests: { cpu: "100m", memory: "128Mi" }
+    limits:   { cpu: "500m", memory: "512Mi" }
+  progression:
+    requests: { cpu: "50m", memory: "64Mi" }
+    limits:   { cpu: "200m", memory: "256Mi" }
+
+
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 4
+  cpu:
+    targetAverageUtilization: 60
+  memory:
+    enabled: false
+    targetAverageUtilization: 70
+
+
+nginx:
+  enabled: false
+  image: nginx:alpine
+  replicas: 1
+
+
+serviceMonitor:
+  enabled: false
+  namespace: monitoring
+  labels: {}

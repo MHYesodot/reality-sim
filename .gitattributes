@@ -1,0 +1,10 @@
+* text=auto eol=lf
+
+# שמור על LF לסקריפטים
+*.sh text eol=lf
+*.bash text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# קבצי PowerShell יכולים להישאר CRLF
+*.ps1 text eol=crlf

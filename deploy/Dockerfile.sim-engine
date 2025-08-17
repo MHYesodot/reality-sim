@@ -1,0 +1,21 @@
+# --- sim-engine ---
+FROM node:20-alpine AS runtime
+WORKDIR /app
+
+RUN apk add --no-cache bash && corepack enable
+
+COPY pnpm-workspace.yaml pnpm-workspace.yaml
+COPY package.json ./
+COPY .npmrc* ./
+COPY tsconfig*.json ./
+
+COPY packages ./packages
+COPY apps/sim-engine ./apps/sim-engine
+COPY deploy ./deploy
+
+RUN pnpm -r --filter ./apps/sim-engine... install --no-frozen-lockfile
+RUN npm install -g ts-node typescript
+
+ENV NODE_ENV=production
+EXPOSE 8081
+CMD ["node","-r","ts-node/register","apps/sim-engine/src/index.ts"]

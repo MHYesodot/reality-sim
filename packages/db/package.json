@@ -1,0 +1,18 @@
+{
+  "name": "@db/reality-sim",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "mongodb": "^6.7.0",
+    "redis": "^4.7.0",
+    "@config/reality-sim": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2"
+  }
+}

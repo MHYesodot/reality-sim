@@ -1,0 +1,34 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "../..",
+    "baseUrl": "../..",
+    "paths": {
+      "@reality-sim/types": [
+        "packages/types/src/index.ts"
+      ],
+      "@config/reality-sim": [
+        "packages/config/src/index.ts"
+      ],
+      "@db/reality-sim": [
+        "packages/db/src/index.ts"
+      ],
+      "@messaging/reality-sim": [
+        "packages/messaging/src/index.ts"
+      ],
+      "@ai/reality-sim": [
+        "packages/ai/src/index.ts"
+      ],
+      "@utils/reality-sim": [
+        "packages/utils/src/index.ts"
+      ],
+      "@api-sdk/reality-sim": [
+        "packages/api-sdk/src/index.ts"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
+}

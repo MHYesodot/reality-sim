@@ -1,0 +1,26 @@
+# --- realtime ---
+FROM node:20-alpine AS runtime
+WORKDIR /app
+
+RUN apk add --no-cache bash && corepack enable
+
+# Workspace files
+COPY pnpm-workspace.yaml pnpm-workspace.yaml
+COPY package.json ./
+COPY .npmrc* ./
+COPY tsconfig*.json ./
+
+# Copy only needed packages and the realtime app
+COPY packages ./packages
+COPY apps/realtime ./apps/realtime
+
+# Install the app and all of its workspace dependencies
+RUN pnpm -r --filter @apps/realtime^... --filter @apps/realtime install --no-frozen-lockfile
+
+# Build the app and all of its workspace dependencies
+RUN pnpm -r --filter @apps/realtime^... --filter @apps/realtime build
+
+ENV NODE_ENV=production
+WORKDIR /app/apps/realtime
+EXPOSE 8090
+CMD ["node","dist/apps/realtime/src/index.js"]

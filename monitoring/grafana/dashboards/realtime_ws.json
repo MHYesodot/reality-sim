@@ -1,0 +1,24 @@
+{
+  "title": "RealitySim - Realtime WS",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Active WS Connections",
+      "targets": [
+        {
+          "expr": "sum(realtime_ws_connections)"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Events/sec",
+      "targets": [
+        {
+          "expr": "sum(rate(event_orchestrator_events_total[1m])) + sum(rate(sim_engine_ticks_total[1m]))"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 36
+}

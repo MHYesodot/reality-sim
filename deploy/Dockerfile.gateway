@@ -1,0 +1,26 @@
+# --- gateway ---
+FROM node:20-alpine AS runtime
+WORKDIR /app
+
+RUN apk add --no-cache bash && corepack enable
+
+# Workspace files
+COPY pnpm-workspace.yaml pnpm-workspace.yaml
+COPY package.json ./
+COPY .npmrc* ./
+COPY tsconfig*.json ./
+
+# Copy needed packages and the gateway app
+COPY packages ./packages
+COPY apps/gateway ./apps/gateway
+
+# Install the app and all of its workspace dependencies
+RUN pnpm -r --filter @apps/gateway^... --filter @apps/gateway install --no-frozen-lockfile
+
+# Build the app and all of its workspace dependencies
+RUN pnpm -r --filter @apps/gateway^... --filter @apps/gateway build
+
+ENV NODE_ENV=production
+WORKDIR /app/apps/gateway
+EXPOSE 8080
+CMD ["node","dist/index.js"]

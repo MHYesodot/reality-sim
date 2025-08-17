@@ -1,0 +1,72 @@
+name: reality-sim
+
+services:
+  mongo:
+    image: mongo:6
+    command: ["--bind_ip_all"]
+    ports: ["27017:27017"]
+    volumes:
+      - mongo-data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.gateway
+    env_file:
+      - ../.env
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/reality
+      - REDIS_URL=redis://redis:6379
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672
+      - JWT_SECRET=devsecret
+      - PORT=8080
+    depends_on: [mongo, redis, rabbitmq]
+    ports: ["8080:8080"]
+
+  realtime:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.realtime
+    env_file:
+      - ../.env
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672
+      - JWT_SECRET=devsecret
+      - MONGO_URI=mongodb://mongo:27017/reality
+      - PORT=8090
+    depends_on: [redis, rabbitmq]
+    ports: ["8090:8090"]
+
+  quest-ai:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.quest-ai
+    env_file:
+      - ../.env
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/reality
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672
+      - PORT=8081
+    depends_on: [mongo, rabbitmq]
+    ports: ["8081:8081"]
+
+  nginx:
+    image: nginx:alpine
+    depends_on: [gateway, realtime]
+    ports: ["80:80"]
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  mongo-data:

@@ -1,0 +1,46 @@
+name: server-ci
+
+on:
+  push:
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'deploy/**'
+      - '.github/workflows/server-ci.yml'
+  pull_request:
+
+jobs:
+  node-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -w -r run typecheck || true
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: node-tests
+    strategy:
+      matrix:
+        service: [gateway, realtime, sim-engine, event-orchestrator, quest-ai, progression]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: |
+          docker build -f deploy/Dockerfile.${{ matrix.service }} -t ghcr.io/${{ github.repository }}/reality-${{ matrix.service }}:${{ github.sha }} . || true
+      - name: Login to GHCR
+        if: github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push image
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker push ghcr.io/${{ github.repository }}/reality-${{ matrix.service }}:${{ github.sha }} || true

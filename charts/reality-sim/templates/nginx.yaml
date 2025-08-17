@@ -1,0 +1,40 @@
+{{- if .Values.nginx.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reality-nginx
+spec:
+  replicas: {{ .Values.nginx.replicas }}
+  selector: { matchLabels: { app: reality-nginx } }
+  template:
+    metadata: { labels: { app: reality-nginx } }
+    spec:
+      containers:
+        - name: nginx
+          image: {{ .Values.nginx.image }}
+          ports: [ { containerPort: 80 } ]
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+      volumes:
+        - name: config
+          configMap:
+            name: reality-nginx-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reality-nginx
+spec:
+  selector: { app: reality-nginx }
+  ports: [ { port: 80, targetPort: 80 } ]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reality-nginx-config
+data:
+  default.conf: |-
+{{ .Files.Get "deploy/nginx.conf" | indent 4 }}
+{{- end }}
