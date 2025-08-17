@@ -24,7 +24,7 @@ pnpm install
 ```
 
 ### 3) Environment
-Copy `.env.example` to `.env` in root and each service, then adjust values.
+Copy the root `.env.example` to `.env` at the repository root. Services read from this file; create service-specific `.env` files only if you need to override values.
 
 ### 4) Run infra + core services
 ```bash
